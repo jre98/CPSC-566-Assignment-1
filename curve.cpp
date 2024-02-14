@@ -134,6 +134,47 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
 
 
+
+Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
+{
+    // Check
+    if( P.size() < 4 )
+    {
+        cerr << "evalBspline must be called with 4 or more control points." << endl;
+        exit( 0 );
+    }
+
+    // TODO:
+    // It is suggested that you implement this function by changing
+    // basis from B-spline to Bezier.  That way, you can just call
+    // your evalBezier function.
+
+    // new_geo_matrix = geo_matrix * b_spline * inverse_bernstein
+
+    // evalBezier(new_geo_matrix, steps)
+
+    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
+
+    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    for( unsigned i = 0; i < P.size(); ++i )
+    {
+        cerr << "\t>>> " << P[i] << endl;
+    }
+
+    cerr << "\t>>> Steps (type steps): " << steps << endl;
+    cerr << "\t>>> Returning empty curve." << endl;
+
+    // Return an empty curve right now.
+    return Curve();
+}
+
+
+
+
+
+
+
+
 Curve evalCircle( float radius, unsigned steps )
 {
     // This is a sample function on how to properly initialize a Curve

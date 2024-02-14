@@ -1,0 +1,107 @@
+	>>> evalBezier has been called with the following input:
+	>>> Control points (type vector< Vector3f >): 
+	>>> (-1, -2, 0)
+	>>> (0, -1, 1)
+	>>> (0, 1, -1)
+	>>> (1, -2, 0)
+	>>> Steps (type steps): 20
+the value of t is: 0
+(-1, -2, 0)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.05
+(-0.85725, -1.84325, 0.12825)
+(0.571518, 0.68519, 0.451531)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.1
+(-0.728, -1.676, 0.216)
+(0.554903, 0.771451, 0.311287)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.15
+(-0.61075, -1.50275, 0.26775)
+(0.531063, 0.830454, 0.167516)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.2
+(-0.504, -1.328, 0.288)
+(0.505273, 0.861935, 0.0297219)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.25
+(-0.40625, -1.15625, 0.28125)
+(0.482805, 0.869048, -0.0965609)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.3
+(-0.316, -0.992, 0.252)
+(0.468031, 0.855367, -0.209807)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.35
+(-0.23175, -0.83975, 0.20475)
+(0.464527, 0.822512, -0.311106)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.4
+(-0.152, -0.704, 0.144)
+(0.475645, 0.76835, -0.402469)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.45
+(-0.0752501, -0.58925, 0.07425)
+(0.504879, 0.684835, -0.484883)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.5
+(0, -0.5, 0)
+(0.5547, 0.5547, -0.5547)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.55
+(0.0752501, -0.44075, -0.0742499)
+(0.620213, 0.350021, -0.59565)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.6
+(0.152, -0.416, -0.144)
+(0.674019, 0.0518473, -0.570323)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.65
+(0.23175, -0.43025, -0.20475)
+(0.668834, -0.288397, -0.447935)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.7
+(0.316, -0.488, -0.252)
+(0.599597, -0.558246, -0.268785)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.75
+(0.40625, -0.59375, -0.28125)
+(0.512316, -0.717242, -0.102463)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.8
+(0.504, -0.752, -0.288)
+(0.437917, -0.798555, 0.0257598)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.85
+(0.61075, -0.96725, -0.26775)
+(0.381902, -0.838133, 0.120466)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.9
+(0.728, -1.244, -0.216)
+(0.340966, -0.856573, 0.191274)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
+the value of t is: 0.95
+(0.85725, -1.58675, -0.12825)
+(0.310962, -0.864165, 0.245677)
+(-nan, -nan, -nan)
+(-nan, -nan, -nan)
