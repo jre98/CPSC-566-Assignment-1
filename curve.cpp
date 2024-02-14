@@ -4,6 +4,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
+#include <fstream>
 using namespace std;
 
 namespace
@@ -29,66 +30,109 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         exit( 0 );
     }
 
-    // TODO:
-    // You should implement this function so that it returns a Curve
-    // (e.g., a vector< CurvePoint >).  The variable "steps" tells you
-    // the number of points to generate on each piece of the spline.
-    // At least, that's how the sample solution is implemented and how
-    // the SWP files are written.  But you are free to interpret this
-    // variable however you want, so long as you can control the
-    // "resolution" of the discretized spline curve with it.
+    ofstream out;
 
-    // Make sure that this function computes all the appropriate
-    // Vector3fs for each CurvePoint: V,T,N,B.
-    // [NBT] should be unit and orthogonal.
+    out.open("curve_points.dat");
 
-    // Also note that you may assume that all Bezier curves that you
-    // receive have G1 continuity.  Otherwise, the TNB will not be
-    // be defined at points where this does not hold.
+    Curve curve;
 
-    cerr << "\t>>> evalBezier has been called with the following input:" << endl;
+    float t;
 
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    Vector3f B_prev(1, 1, 1);
+
+    Matrix4f bernstein(
+                            1.0f, -3.0f, 3.0f, -1.0f,
+                            0.0f, 3.0f, -6.0f, 3.0f,
+                            0.0f, 0.0f, 3.0f, -3.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f
+                        );
+
+
+    Matrix4f d_bernstein(
+                            0.0f, -3.0f, 6.0f, -3.0f,
+                            0.0f, 3.0f, -12.0f, 9.0f,
+                            0.0f, 0.0f, 6.0f, -9.0f,
+                            0.0f, 0.0f, 0.0f, 3.0f
+                            );
+
+    Matrix4f geo_matrix(
+                            P[0].x(), P[1].x(), P[2].x(), P[3].x(),
+                            P[0].y(), P[1].y(), P[2].y(), P[3].y(),
+                            P[0].z(), P[1].z(), P[2].z(), P[3].z(),
+                            0.0f, 0.0f, 0.0f, 1.0f
+                            );
+
+    
+
+    // Determine the number of points to generate on this segment based on the steps parameter
+    int num_points = steps + 1;
+
+    out << "\t>>> evalBezier has been called with the following input:" << endl;
+
+    out << "\t>>> Control points (type vector< Vector3f >): "<< endl;
     for( unsigned i = 0; i < P.size(); ++i )
     {
-        cerr << "\t>>> " << P[i] << endl;
+        out << "\t>>> (" << P[i].x() << ", " << P[i].y() << ", " << P[i].z() << ")" << endl;
     }
 
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
+    out << "\t>>> Steps (type steps): " << steps << endl;
 
-    // Right now this will just return this empty curve.
-    return Curve();
+
+    for(int k = 0; k < num_points - 1; k++) 
+    {
+        CurvePoint p;
+
+        Vector4f d_q_t;
+
+        Vector4f T;
+        
+        t = static_cast<float>(k) / static_cast<float>(steps);
+
+        Vector4f monomials(1, t, pow(t, 2), pow(t, 3));
+        
+        out << "the value of t is: " << t << endl;
+
+        Vector4f result = geo_matrix * bernstein * monomials;
+
+        p.V = Vector3f(result.x(), result.y(), result.z());
+
+        d_q_t = geo_matrix * d_bernstein * monomials;
+
+        T = d_q_t.normalized();
+
+        p.T = Vector3f(T.x(), T.y(), T.z());
+
+        p.N = (B_prev * p.T).normalized();
+
+        p.B = (p.N * p.T).normalized();
+
+        out << "(" <<   p.V.x() << ", " <<    p.V.y() << ", " <<
+        p.V.z() << ")" << endl;
+
+        out << "(" <<   p.T.x() << ", " <<    p.T.y() << ", " <<
+        p.T.z() << ")" << endl;
+
+        out << "(" <<   p.N.x() << ", " <<    p.N.y() << ", " <<
+        p.N.z() << ")" << endl;
+
+        out << "(" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
+        p.B.z() << ")" << endl;
+
+        curve.push_back(p);
+
+        B_prev = p.B;
+    }
+
+    out.close();
+
+    return curve;
 }
 
-Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
-{
-    // Check
-    if( P.size() < 4 )
-    {
-        cerr << "evalBspline must be called with 4 or more control points." << endl;
-        exit( 0 );
-    }
 
-    // TODO:
-    // It is suggested that you implement this function by changing
-    // basis from B-spline to Bezier.  That way, you can just call
-    // your evalBezier function.
 
-    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
-    {
-        cerr << "\t>>> " << P[i] << endl;
-    }
 
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
 
-    // Return an empty curve right now.
-    return Curve();
-}
 
 Curve evalCircle( float radius, unsigned steps )
 {
