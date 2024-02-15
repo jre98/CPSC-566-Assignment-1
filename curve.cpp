@@ -38,7 +38,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
     float t;
 
-    Vector3f B_prev(1, 1, 1);
+    Vector3f B_prev(0.0f, 0.0f, 1.0f);
 
     Matrix4f bernstein(
                             1.0f, -3.0f, 3.0f, -1.0f,
@@ -102,25 +102,40 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
         p.T = Vector3f(T.x(), T.y(), T.z());
 
-        p.N = (B_prev * p.T).normalized();
 
-        p.B = (p.N * p.T).normalized();
+        /*if(k == 0)
+        {
+            out << "In if block\n";
 
-        out << "(" <<   p.V.x() << ", " <<    p.V.y() << ", " <<
+            p.N = Vector3f(0.0f, 0.0f, 0.0f);
+
+            p.B = Vector3f(1.0f, 0.0f, 0.0f);
+        }*/
+
+        if (k > 0)
+        {
+            //out << "in else block\n";
+
+            p.N = (Vector3f::cross(B_prev, p.T)).normalized();
+
+            p.B = (Vector3f::cross(p.T, p.N)).normalized();
+
+            B_prev = p.B;
+        }
+
+        out << "V = (" <<   p.V.x() << ", " <<    p.V.y() << ", " <<
         p.V.z() << ")" << endl;
 
-        out << "(" <<   p.T.x() << ", " <<    p.T.y() << ", " <<
+        out << "T = (" <<   p.T.x() << ", " <<    p.T.y() << ", " <<
         p.T.z() << ")" << endl;
 
-        out << "(" <<   p.N.x() << ", " <<    p.N.y() << ", " <<
+        out << "N = (" <<   p.N.x() << ", " <<    p.N.y() << ", " <<
         p.N.z() << ")" << endl;
 
-        out << "(" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
+        out << "B = (" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
         p.B.z() << ")" << endl;
 
         curve.push_back(p);
-
-        B_prev = p.B;
     }
 
     out.close();
