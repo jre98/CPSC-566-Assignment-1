@@ -94,31 +94,36 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
         Vector4f result = geo_matrix * bernstein * monomials;
 
+        if(result.z() == -0)
+            result.z() = 0.0;
+
         p.V = Vector3f(result.x(), result.y(), result.z());
 
         d_q_t = geo_matrix * d_bernstein * monomials;
 
         T = d_q_t.normalized();
 
+        if(T.z() == -0)
+            T.z() = 0.0;
+
         p.T = Vector3f(T.x(), T.y(), T.z());
 
-
-        /*if(k == 0)
+        if (k == 0)
         {
-            out << "In if block\n";
+            p.T.z() = 0.0;
+        }
 
-            p.N = Vector3f(0.0f, 0.0f, 0.0f);
-
-            p.B = Vector3f(1.0f, 0.0f, 0.0f);
-        }*/
-
-        if (k > 0)
+        else if (k > 0)
         {
-            //out << "in else block\n";
-
             p.N = (Vector3f::cross(B_prev, p.T)).normalized();
 
+            if(p.N.z() == -0)
+                p.N.z() = 0.0;
+
             p.B = (Vector3f::cross(p.T, p.N)).normalized();
+
+            if(p.B.z() == -0)
+                p.B.z() = 0.0;
 
             B_prev = p.B;
         }
