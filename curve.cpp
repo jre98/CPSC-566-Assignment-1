@@ -7,6 +7,28 @@
 #include <fstream>
 using namespace std;
 
+ const   Matrix4f bernstein(
+                            1.0f, -3.0f, 3.0f, -1.0f,
+                            0.0f, 3.0f, -6.0f, 3.0f,
+                            0.0f, 0.0f, 3.0f, -3.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f
+                        );
+
+
+ const   Matrix4f d_bernstein(
+                            0.0f, -3.0f, 6.0f, -3.0f,
+                            0.0f, 3.0f, -12.0f, 9.0f,
+                            0.0f, 0.0f, 6.0f, -9.0f,
+                            0.0f, 0.0f, 0.0f, 3.0f
+                            );
+
+ const Matrix4f b_spline(
+    1.0/6, -3.0/6, 3.0/6, -1.0/6,
+    4.0/6, 0.0/6, -6.0/6, 3.0/6,
+    1.0/6, 3.0/6, 3.0/6, -3.0/6,
+    0.0/6, 0.0/6, 0.0/6, 1.0/6
+);
+
 namespace
 {
     // Approximately equal to.  We don't want to use == because of
@@ -39,21 +61,6 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     float t;
 
     Vector3f B_prev(0.0f, 0.0f, 1.0f);
-
-    Matrix4f bernstein(
-                            1.0f, -3.0f, 3.0f, -1.0f,
-                            0.0f, 3.0f, -6.0f, 3.0f,
-                            0.0f, 0.0f, 3.0f, -3.0f,
-                            0.0f, 0.0f, 0.0f, 1.0f
-                        );
-
-
-    Matrix4f d_bernstein(
-                            0.0f, -3.0f, 6.0f, -3.0f,
-                            0.0f, 3.0f, -12.0f, 9.0f,
-                            0.0f, 0.0f, 6.0f, -9.0f,
-                            0.0f, 0.0f, 0.0f, 3.0f
-                            );
 
     Matrix4f geo_matrix(
                             P[0].x(), P[1].x(), P[2].x(), P[3].x(),
@@ -164,16 +171,59 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
         exit( 0 );
     }
 
-    // TODO:
-    // It is suggested that you implement this function by changing
-    // basis from B-spline to Bezier.  That way, you can just call
-    // your evalBezier function.
+    Curve finalCurve;
+
+    Curve curveSegment;
+
+    //b_spline.print();
 
     // new_geo_matrix = geo_matrix * b_spline * inverse_bernstein
 
     // evalBezier(new_geo_matrix, steps)
 
-    cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
+        /*cout << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    for( unsigned i = 0; i < P.size(); ++i )
+    {
+        cout << "\t>>> (" << P[i].x() << ", " << P[i].y() << ", " << P[i].z() << ")" << endl;
+    }*/
+
+    for(unsigned i = 3; i < P.size(); i++)
+    {
+        Matrix4f geo_matrix(
+                            P[i-3].x(), P[i-2].x(), P[i-1].x(), P[i].x(),
+                            P[i-3].y(), P[i-2].y(), P[i-1].y(), P[i].y(),
+                            P[i-3].z(), P[i-2].z(), P[i-1].z(), P[i].z(),
+                            0.0f, 0.0f, 0.0f, 1.0f
+                            );
+
+        vector< Vector3f > new_cPoints;
+
+        Matrix4f new_geo_matrix = geo_matrix * b_spline * bernstein.inverse();
+
+        cout << "\nnew geo matrix\n";
+
+        new_geo_matrix.print();
+
+        for(int k = 0; k < 4; k++)
+        {
+            Vector3f c_point(new_geo_matrix(0,k), new_geo_matrix(1,k), new_geo_matrix(2,k));
+
+            c_point.print();
+
+            new_cPoints.push_back(c_point);
+        }
+
+        Curve curveSegment = evalBezier(new_cPoints, steps);
+
+        for(unsigned j = 0; j < curveSegment.size(); j++)
+        {
+            CurvePoint cp = curveSegment[j];
+
+            finalCurve.push_back(cp);
+        }
+    }
+
+    /*cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
     cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
     for( unsigned i = 0; i < P.size(); ++i )
@@ -182,10 +232,11 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
     }
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;
+    cerr << "\t>>> Returning empty curve." << endl;*/
 
     // Return an empty curve right now.
-    return Curve();
+
+    return finalCurve;
 }
 
 
