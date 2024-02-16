@@ -7,6 +7,7 @@
 #include <fstream>
 using namespace std;
 
+ // Bernstein basis matrix
  const   Matrix4f bernstein(
                             1.0f, -3.0f, 3.0f, -1.0f,
                             0.0f, 3.0f, -6.0f, 3.0f,
@@ -14,7 +15,7 @@ using namespace std;
                             0.0f, 0.0f, 0.0f, 1.0f
                         );
 
-
+ // first derivative of bernstein basis matrix
  const   Matrix4f d_bernstein(
                             0.0f, -3.0f, 6.0f, -3.0f,
                             0.0f, 3.0f, -12.0f, 9.0f,
@@ -22,6 +23,7 @@ using namespace std;
                             0.0f, 0.0f, 0.0f, 3.0f
                             );
 
+ // b-spline basis matrix, all entries are divided by 6
  const Matrix4f b_spline(
     1.0/6, -3.0/6, 3.0/6, -1.0/6,
     4.0/6, 0.0/6, -6.0/6, 3.0/6,
@@ -60,8 +62,10 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
     float t;
 
+    // initial seed for the binormals
     Vector3f B_prev(0.0f, 0.0f, 1.0f);
 
+    // geometry matrix consisting of the coordinates of the 4 control points
     Matrix4f geo_matrix(
                             P[0].x(), P[1].x(), P[2].x(), P[3].x(),
                             P[0].y(), P[1].y(), P[2].y(), P[3].y(),
@@ -84,54 +88,73 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
     out << "\t>>> Steps (type steps): " << steps << endl;
 
-
+    // for each step in steps
     for(int k = 0; k < num_points - 1; k++) 
     {
+        // the point we are plotting
         CurvePoint p;
 
+        // derivative of the curve at t
         Vector4f d_q_t;
 
+        // tangent vector
         Vector4f T;
         
+        // t = i / steps
         t = static_cast<float>(k) / static_cast<float>(steps);
 
+        // monomial basis: 1, t, t^2, t^3
         Vector4f monomials(1, t, pow(t, 2), pow(t, 3));
         
         out << "the value of t is: " << t << endl;
 
+        // calculate length 4 vector q(t)
         Vector4f result = geo_matrix * bernstein * monomials;
 
         if(result.z() == -0)
             result.z() = 0.0;
 
+        // store result coordinates in proper length 3 vector
         p.V = Vector3f(result.x(), result.y(), result.z());
 
+        // calculate q'(t)
         d_q_t = geo_matrix * d_bernstein * monomials;
 
+        // Tangent = ||q'(t)||
         T = d_q_t.normalized();
 
+        // change any -0 z values to 0
         if(T.z() == -0)
             T.z() = 0.0;
 
+        // store T
         p.T = Vector3f(T.x(), T.y(), T.z());
 
+        // make sure the first T.z coordinate has a value (normally -nan)
+        // don't calculate normals for first point, will result in all nan values
         if (k == 0)
         {
             p.T.z() = 0.0;
         }
 
+        // for rest of the points
         else if (k > 0)
         {
+            // N_i = (B_i-1 * T_i).normalized
             p.N = (Vector3f::cross(B_prev, p.T)).normalized();
 
+            // get rid of -0 values
             if(p.N.z() == -0)
                 p.N.z() = 0.0;
 
+            // B_i = (T_i * N_i).normalized
             p.B = (Vector3f::cross(p.T, p.N)).normalized();
 
+            // get rid of -0 values
             if(p.B.z() == -0)
                 p.B.z() = 0.0;
 
+            // store binormal
             B_prev = p.B;
         }
 
@@ -147,6 +170,7 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         out << "B = (" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
         p.B.z() << ")" << endl;
 
+        // add point to curve
         curve.push_back(p);
     }
 
@@ -171,24 +195,16 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
         exit( 0 );
     }
 
+    // curve we will be returning
     Curve finalCurve;
 
+    // segment of final curve
     Curve curveSegment;
 
-    //b_spline.print();
-
-    // new_geo_matrix = geo_matrix * b_spline * inverse_bernstein
-
-    // evalBezier(new_geo_matrix, steps)
-
-        /*cout << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
-    {
-        cout << "\t>>> (" << P[i].x() << ", " << P[i].y() << ", " << P[i].z() << ")" << endl;
-    }*/
-
+    // loop through control points after the initial 4
     for(unsigned i = 3; i < P.size(); i++)
     {
+        // store the new control point i in last col of geometric matrix
         Matrix4f geo_matrix(
                             P[i-3].x(), P[i-2].x(), P[i-1].x(), P[i].x(),
                             P[i-3].y(), P[i-2].y(), P[i-1].y(), P[i].y(),
@@ -196,25 +212,32 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
                             0.0f, 0.0f, 0.0f, 1.0f
                             );
 
+        // vector to store our transformed control points
         vector< Vector3f > new_cPoints;
 
+        // get new control points by changing from b_spline to bernstein basis
+        // we can then pass them to the evalBezier function
         Matrix4f new_geo_matrix = geo_matrix * b_spline * bernstein.inverse();
 
-        cout << "\nnew geo matrix\n";
+        //cout << "\nnew geo matrix\n";
 
-        new_geo_matrix.print();
+        //new_geo_matrix.print();
 
+        // for each of the 4 new control points
         for(int k = 0; k < 4; k++)
         {
+            // get cp coords from the columns of the matrix
             Vector3f c_point(new_geo_matrix(0,k), new_geo_matrix(1,k), new_geo_matrix(2,k));
 
-            c_point.print();
+            //c_point.print();
 
             new_cPoints.push_back(c_point);
         }
 
+        // pass control points to evalBezier to get our curve segment
         Curve curveSegment = evalBezier(new_cPoints, steps);
 
+        // add curve segment to our curve
         for(unsigned j = 0; j < curveSegment.size(); j++)
         {
             CurvePoint cp = curveSegment[j];
@@ -233,8 +256,6 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
 
     cerr << "\t>>> Steps (type steps): " << steps << endl;
     cerr << "\t>>> Returning empty curve." << endl;*/
-
-    // Return an empty curve right now.
 
     return finalCurve;
 }
