@@ -19,6 +19,11 @@ namespace
     }
 }
 
+
+
+
+
+
 Surface makeSurfRev(const Curve &profile, unsigned steps)
 {
     Surface surface;
@@ -29,12 +34,72 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
         exit(0);
     }
 
-    // TODO: Here you should build the surface.  See surf.h for details.
+    // Implementing the surfaces of revolution
+    // Step 1: generate the vertices of the points of revolution
+    for(size_t i = 0; i < profile.size(); i++)
+    {
 
-    cerr << "\t>>> makeSurfRev called (but not implemented).\n\t>>> Returning empty surface." << endl;
- 
+        // Now, rotate each point of the curve around the y axis, then add to vertices
+        // This involves calculating the new location of the point based on the angle of change
+        for(unsigned j = 0; j <= steps; j++)  
+        {
+            // Angle that determines how many degrees we will rotate
+            float angle = 2 * M_PI * j / steps;
+
+            // Get the current point we are working with
+            Vector4f profilePoint = Vector4f(profile[i].V[0], profile[i].V[1], 
+            profile[i].V[2], 1.0f); 
+
+            // Your matrix setup is fine
+            Matrix4f rotateM = rotateM.rotateY(angle);
+            Matrix3f subrotateM = rotateM.getSubmatrix3x3(0,0);
+            Matrix3f tsubrotateM = subrotateM.transposed();
+            Matrix3f rotateNormalM = tsubrotateM.inverse();
+
+            //Multiply the profile point with the rotate y matrix and save in a Vector3f
+            Vector4f profilePointRotated= rotateM * profilePoint ;
+            Vector3f surfaceVV = Vector3f(profilePointRotated[0], profilePointRotated[1], 
+            profilePointRotated[2]);
+
+            // Multiply the normal matrix with the profilePoint normal.
+            Vector3f surfaceVN = rotateNormalM * profile[i].N; 
+
+            // Push to Curve list
+            surface.VV.push_back(surfaceVV );
+            surface.VN.push_back(-1 * surfaceVN);
+            
+        }
+    }
+
+
+    for(unsigned i = 0; i < surface.VV.size() - steps + 1; i++) {
+        // To hold the current two triangles that make up the current square
+        Tup3u triangle1;
+        Tup3u triangle2;
+
+        if((i + 1) % steps + 1 != 0) {
+            triangle1 = Tup3u(i + 1, i, i + steps + 1);
+            triangle2 = Tup3u(i, i + steps, i + steps + 1);
+        }
+
+        if(i == 1 || i == 2) {
+            cout << triangle1 << endl;
+            cout << triangle2 << endl;
+        }
+        surface.VF.push_back(triangle1);
+        surface.VF.push_back(triangle2);
+        
+    }
+
+
+
+    
+    cout << "right before returning the surface" << endl;
     return surface;
 }
+
+
+
 
 Surface makeGenCyl(const Curve &profile, const Curve &sweep )
 {
@@ -48,10 +113,62 @@ Surface makeGenCyl(const Curve &profile, const Curve &sweep )
 
     // TODO: Here you should build the surface.  See surf.h for details.
 
+    for (unsigned i = 0; i < profile.size(); i++) {
+        for (unsigned j = 0; j < sweep.size(); j++) {
+            // Matrix for coordinate transformation
+            Matrix4f coords_M
+            (   sweep[j].N[0], sweep[j].B[0], sweep[j].T[0], sweep[j].V[0],
+                sweep[j].N[1], sweep[j].B[1], sweep[j].T[1], sweep[j].V[1],
+                sweep[j].N[2], sweep[j].B[2], sweep[j].T[2], sweep[j].V[2],
+                    0.0f,          0.0f,          0.0f,           1.0f     );
+
+            // unsure how to calculate angle for this part
+            float angle = 2 * M_PI * j / profile.size();
+            // Calculate the matrix we need for determining the new normals
+            Matrix4f rotateM = Matrix4f::rotateY(angle);
+
+            Matrix3f subrotateM = rotateM.getSubmatrix3x3(0,0);
+            Matrix3f tSubrotateM = subrotateM.transposed();
+            Matrix3f rotateNormalM = tSubrotateM.inverse();
+
+            // Calculating the new vertex of the coordinates around the y axis
+            Vector4f profileVV = Vector4f(profile[i].V[0], profile[i].V[1], profile[i].V[2], 1.0f);
+            Vector4f coordsVV = coords_M * profileVV;
+            Vector3f surfaceVV = Vector3f(coordsVV[0], coordsVV[1], coordsVV[2]);
+
+            // Now that we have the new vertex, we need to calculate its normal as well
+            Vector3f surfaceVN = rotateNormalM * profile[i].N * -1;
+
+            // Now that we have the new vertices and their normals, add them to the surface object
+            surface.VV.push_back(surfaceVV);
+            surface.VN.push_back(surfaceVN);
+
+        }
+    }
+
+    // Now, generate the faces
+    for (unsigned k = 0 ; k < surface.VV.size() - (sweep.size()); k++) {
+        Tup3u triangle_1;
+        Tup3u triangle_2;
+
+        if ( (k + 1) % (sweep.size()) != 0) {
+            triangle_1 = Tup3u(k + 1, k, k + sweep.size());
+            triangle_2 = Tup3u(k, k + sweep.size(), k + sweep.size() + 1);
+        }
+
+        surface.VF.push_back(triangle_1);
+        surface.VF.push_back(triangle_2);
+
+    }
+
     cerr << "\t>>> makeGenCyl called (but not implemented).\n\t>>> Returning empty surface." <<endl;
 
     return surface;
 }
+
+
+
+
 
 void drawSurface(const Surface &surface, bool shaded)
 {
