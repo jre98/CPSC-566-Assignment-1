@@ -71,7 +71,7 @@ Surface makeSurfRev(const Curve &profile, unsigned steps)
         }
     }
 
-
+    // generate faces
     for(unsigned i = 0; i < surface.VV.size() - steps + 1; i++) {
         // To hold the current two triangles that make up the current square
         Tup3u triangle1;
@@ -147,19 +147,21 @@ Surface makeGenCyl(const Curve &profile, const Curve &sweep )
     }
 
     // Now, generate the faces
-    for (unsigned k = 0 ; k < surface.VV.size() - (sweep.size()); k++) {
-        Tup3u triangle_1;
-        Tup3u triangle_2;
+    for (unsigned k = 0; k < profile.size() - 1; k++) {
+        for (unsigned j = 0; j < sweep.size() - 1; j++) {
+        // Define the indices of the vertices for the current face
+        unsigned v0 = k * sweep.size() + j;
+        unsigned v1 = v0 + 1;
+        unsigned v2 = (k + 1) * sweep.size() + j;
+        unsigned v3 = v2 + 1;
 
-        if ( (k + 1) % (sweep.size()) != 0) {
-            triangle_1 = Tup3u(k + 1, k, k + sweep.size());
-            triangle_2 = Tup3u(k, k + sweep.size(), k + sweep.size() + 1);
-        }
-
-        surface.VF.push_back(triangle_1);
-        surface.VF.push_back(triangle_2);
-
+        // Add the indices to form two triangles
+        surface.VF.push_back(Tup3u(v0, v2, v1));
+        surface.VF.push_back(Tup3u(v1, v2, v3));
     }
+}
+
+
 
     cerr << "\t>>> makeGenCyl called (but not implemented).\n\t>>> Returning empty surface." <<endl;
 
