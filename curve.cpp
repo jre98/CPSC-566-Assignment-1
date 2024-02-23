@@ -54,10 +54,6 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         exit( 0 );
     }
 
-    ofstream out;
-
-    out.open("curve_points.dat");
-
     Curve curve;
 
     float t;
@@ -75,21 +71,18 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
 
     
 
-    // Determine the number of points to generate on this segment based on the steps parameter
-    int num_points = steps + 1;
+    cout << "\t>>> evalBezier has been called with the following input:" << endl;
 
-    out << "\t>>> evalBezier has been called with the following input:" << endl;
-
-    out << "\t>>> Control points (type vector< Vector3f >): "<< endl;
+    cout << "\t>>> Control points (type vector< Vector3f >): "<< endl;
     for( unsigned i = 0; i < P.size(); ++i )
     {
-        out << "\t>>> (" << P[i].x() << ", " << P[i].y() << ", " << P[i].z() << ")" << endl;
+        cout << "\t>>> (" << P[i].x() << ", " << P[i].y() << ", " << P[i].z() << ")" << endl;
     }
 
-    out << "\t>>> Steps (type steps): " << steps << endl;
+    cout << "\t>>> Steps (type steps): " << steps << endl;
 
     // for each step in steps
-    for(int k = 0; k < num_points - 1; k++) 
+    for(unsigned k = 1; k <= steps; k++) 
     {
         // the point we are plotting
         CurvePoint p;
@@ -106,7 +99,11 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         // monomial basis: 1, t, t^2, t^3
         Vector4f monomials(1, t, pow(t, 2), pow(t, 3));
         
-        out << "the value of t is: " << t << endl;
+        //cout << "the value of t is: " << t << endl;
+
+        //cout << "monomial basis: ";
+
+        //monomials.print();
 
         // calculate length 4 vector q(t)
         Vector4f result = geo_matrix * bernstein * monomials;
@@ -120,8 +117,16 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         // calculate q'(t)
         d_q_t = geo_matrix * d_bernstein * monomials;
 
+        //cout << "tangent before being normalized: ";
+
+        //d_q_t.print();
+
         // Tangent = ||q'(t)||
         T = d_q_t.normalized();
+
+        //cout << "tangent after being normalized: ";
+
+        //T.print();
 
         // change any -0 z values to 0
         if(T.z() == -0)
@@ -130,51 +135,38 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
         // store T
         p.T = Vector3f(T.x(), T.y(), T.z());
 
-        // make sure the first T.z coordinate has a value (normally -nan)
-        // don't calculate normals for first point, will result in all nan values
-        if (k == 0)
-        {
-            p.T.z() = 0.0;
-        }
+        // N_i = (B_i-1 * T_i).normalized
+        p.N = (Vector3f::cross(B_prev, p.T)).normalized();
 
-        // for rest of the points
-        else if (k > 0)
-        {
-            // N_i = (B_i-1 * T_i).normalized
-            p.N = (Vector3f::cross(B_prev, p.T)).normalized();
+        // get rid of -0 values
+        if(p.N.z() == -0)
+            p.N.z() = 0.0;
 
-            // get rid of -0 values
-            if(p.N.z() == -0)
-                p.N.z() = 0.0;
+        // B_i = (T_i * N_i).normalized
+        p.B = (Vector3f::cross(p.T, p.N)).normalized();
 
-            // B_i = (T_i * N_i).normalized
-            p.B = (Vector3f::cross(p.T, p.N)).normalized();
+        // get rid of -0 values
+        if(p.B.z() == -0)
+            p.B.z() = 0.0;
 
-            // get rid of -0 values
-            if(p.B.z() == -0)
-                p.B.z() = 0.0;
+        // store binormal
+        B_prev = p.B;
 
-            // store binormal
-            B_prev = p.B;
-        }
-
-        out << "V = (" <<   p.V.x() << ", " <<    p.V.y() << ", " <<
+        /*cout << "V = (" <<   p.V.x() << ", " <<    p.V.y() << ", " <<
         p.V.z() << ")" << endl;
 
-        out << "T = (" <<   p.T.x() << ", " <<    p.T.y() << ", " <<
+        cout << "T = (" <<   p.T.x() << ", " <<    p.T.y() << ", " <<
         p.T.z() << ")" << endl;
 
-        out << "N = (" <<   p.N.x() << ", " <<    p.N.y() << ", " <<
+        cout << "N = (" <<   p.N.x() << ", " <<    p.N.y() << ", " <<
         p.N.z() << ")" << endl;
 
-        out << "B = (" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
-        p.B.z() << ")" << endl;
+        cout << "B = (" <<   p.B.x() << ", " <<    p.B.y() << ", " <<
+        p.B.z() << ")" << endl;*/
 
         // add point to curve
         curve.push_back(p);
     }
-
-    out.close();
 
     return curve;
 }
@@ -212,6 +204,10 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
                             0.0f, 0.0f, 0.0f, 1.0f
                             );
 
+        //cout << "current control points\n";
+
+        //geo_matrix.print();
+
         // vector to store our transformed control points
         vector< Vector3f > new_cPoints;
 
@@ -234,6 +230,11 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
             new_cPoints.push_back(c_point);
         }
 
+        //cout << "\nnew control points\n";
+
+        //for(int d = 0; d < 4; d++)
+            //cout << "(" << new_cPoints[d].x() << ", " << new_cPoints[d].y() << ", " << new_cPoints[d].z() << ")\n";
+
         // pass control points to evalBezier to get our curve segment
         Curve curveSegment = evalBezier(new_cPoints, steps);
 
@@ -245,17 +246,6 @@ Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
             finalCurve.push_back(cp);
         }
     }
-
-    /*cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
-
-    cerr << "\t>>> Control points (type vector< Vector3f >): "<< endl;
-    for( unsigned i = 0; i < P.size(); ++i )
-    {
-        cerr << "\t>>> " << P[i] << endl;
-    }
-
-    cerr << "\t>>> Steps (type steps): " << steps << endl;
-    cerr << "\t>>> Returning empty curve." << endl;*/
 
     return finalCurve;
 }
